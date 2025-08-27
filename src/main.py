@@ -1,4 +1,4 @@
-# src/main.py - Versión actualizada con inscripciones
+# src/main.py - Versión actualizada con todas las funcionalidades
 from src.modelos import Estudiante, Curso, Inscripcion, Matricula
 from src.persistencia import PersistenciaCSV
 from src.ui import InterfazUsuario
@@ -52,9 +52,9 @@ def main():
                     elif sub_opcion == "1":
                         ui.crear_estudiante()
                     elif sub_opcion == "2":
-                        print("Función de editar estudiante no implementada en esta versión")
+                        ui.editar_estudiante()
                     elif sub_opcion == "3":
-                        print("Función de eliminar estudiante no implementada en esta versión")
+                        ui.eliminar_estudiante()
                     elif sub_opcion == "4":
                         ui.listar_estudiantes()
                     else:
@@ -71,9 +71,9 @@ def main():
                     elif sub_opcion == "1":
                         ui.crear_curso()
                     elif sub_opcion == "2":
-                        print("Función de editar curso no implementada en esta versión")
+                        ui.editar_curso()
                     elif sub_opcion == "3":
-                        print("Función de eliminar curso no implementada en esta versión")
+                        ui.eliminar_curso()
                     elif sub_opcion == "4":
                         ui.listar_cursos()
                     else:
@@ -90,9 +90,9 @@ def main():
                     elif sub_opcion == "1":
                         ui.crear_inscripcion()
                     elif sub_opcion == "2":
-                        print("Función de editar inscripción no implementada en esta versión")
+                        ui.editar_inscripcion()
                     elif sub_opcion == "3":
-                        print("Función de eliminar inscripción no implementada en esta versión")
+                        ui.eliminar_inscripcion()
                     elif sub_opcion == "4":
                         ui.listar_inscripciones()
                     elif sub_opcion == "5":
@@ -113,7 +113,7 @@ def main():
                     elif sub_opcion == "2":
                         ui.asignar_nota()
                     elif sub_opcion == "3":
-                        print("Función de eliminar matrícula no implementada en esta versión")
+                        ui.eliminar_matricula()
                     elif sub_opcion == "4":
                         ui.listar_matriculas()
                     else:

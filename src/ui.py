@@ -1,4 +1,4 @@
-# src/ui.py - Versión actualizada con manejo de inscripciones
+# src/ui.py - Versión completa con editar y eliminar
 from typing import List, Optional
 from datetime import datetime
 import uuid
@@ -127,6 +127,148 @@ class InterfazUsuario:
         print(f"✅ Estudiante creado exitosamente con ID: {nuevo_id}")
         return True
     
+    def editar_estudiante(self):
+        """Interfaz para editar un estudiante existente"""
+        print("\n--- EDITAR ESTUDIANTE ---")
+        
+        if not self.estudiantes:
+            print("❌ No hay estudiantes registrados.")
+            return False
+        
+        # Mostrar estudiantes disponibles
+        print("\nEstudiantes disponibles:")
+        for i, estudiante in enumerate(self.estudiantes, 1):
+            print(f"{i}. {estudiante.documento} - {estudiante.nombre_completo()}")
+        
+        try:
+            indice = int(input("\nSeleccione estudiante a editar (número): ")) - 1
+            if indice < 0 or indice >= len(self.estudiantes):
+                print("❌ Error: Selección inválida")
+                return False
+            
+            estudiante_a_editar = self.estudiantes[indice]
+            
+            print(f"\n--- EDITANDO: {estudiante_a_editar.nombre_completo()} ---")
+            print("Ingrese los nuevos datos (presione Enter para mantener el valor actual):")
+            
+            # Recopilar nuevos datos
+            print(f"Documento actual: {estudiante_a_editar.documento}")
+            nuevo_documento = input("Nuevo documento: ").strip()
+            if not nuevo_documento:
+                nuevo_documento = estudiante_a_editar.documento
+            
+            print(f"Nombres actuales: {estudiante_a_editar.nombres}")
+            nuevos_nombres = input("Nuevos nombres: ").strip()
+            if not nuevos_nombres:
+                nuevos_nombres = estudiante_a_editar.nombres
+            
+            print(f"Apellidos actuales: {estudiante_a_editar.apellidos}")
+            nuevos_apellidos = input("Nuevos apellidos: ").strip()
+            if not nuevos_apellidos:
+                nuevos_apellidos = estudiante_a_editar.apellidos
+            
+            print(f"Correo actual: {estudiante_a_editar.correo}")
+            nuevo_correo = input("Nuevo correo: ").strip()
+            if not nuevo_correo:
+                nuevo_correo = estudiante_a_editar.correo
+            
+            print(f"Fecha de nacimiento actual: {estudiante_a_editar.fecha_nacimiento}")
+            nueva_fecha = input("Nueva fecha de nacimiento (YYYY-MM-DD): ").strip()
+            if not nueva_fecha:
+                nueva_fecha = estudiante_a_editar.fecha_nacimiento
+            
+            # Validar nuevos datos
+            datos_nuevos = {
+                'documento': nuevo_documento,
+                'nombres': nuevos_nombres,
+                'apellidos': nuevos_apellidos,
+                'correo': nuevo_correo,
+                'fecha_nacimiento': nueva_fecha
+            }
+            
+            errores = validar_estudiante_completo(datos_nuevos)
+            if errores:
+                print("\n❌ ERRORES DE VALIDACIÓN:")
+                for error in errores:
+                    print(f"  • {error}")
+                return False
+            
+            # Verificar duplicados (excluyendo el estudiante actual)
+            for estudiante in self.estudiantes:
+                if estudiante.id != estudiante_a_editar.id:
+                    if estudiante.documento == nuevo_documento:
+                        print(f"❌ Error: Ya existe otro estudiante con documento {nuevo_documento}")
+                        return False
+                    if estudiante.correo.lower() == nuevo_correo.lower():
+                        print(f"❌ Error: Ya existe otro estudiante con correo {nuevo_correo}")
+                        return False
+            
+            # Actualizar estudiante
+            estudiante_a_editar.documento = nuevo_documento
+            estudiante_a_editar.nombres = nuevos_nombres
+            estudiante_a_editar.apellidos = nuevos_apellidos
+            estudiante_a_editar.correo = nuevo_correo
+            estudiante_a_editar.fecha_nacimiento = nueva_fecha
+            
+            print("✅ Estudiante actualizado exitosamente")
+            return True
+            
+        except ValueError:
+            print("❌ Error: Debe ingresar un número válido")
+            return False
+    
+    def eliminar_estudiante(self):
+        """Interfaz para eliminar un estudiante"""
+        print("\n--- ELIMINAR ESTUDIANTE ---")
+        
+        if not self.estudiantes:
+            print("❌ No hay estudiantes registrados.")
+            return False
+        
+        # Mostrar estudiantes disponibles
+        print("\nEstudiantes disponibles:")
+        for i, estudiante in enumerate(self.estudiantes, 1):
+            print(f"{i}. {estudiante.documento} - {estudiante.nombre_completo()}")
+        
+        try:
+            indice = int(input("\nSeleccione estudiante a eliminar (número): ")) - 1
+            if indice < 0 or indice >= len(self.estudiantes):
+                print("❌ Error: Selección inválida")
+                return False
+            
+            estudiante_a_eliminar = self.estudiantes[indice]
+            
+            # Verificar si tiene inscripciones o matrículas
+            tiene_inscripciones = any(i.estudiante_id == estudiante_a_eliminar.id for i in self.inscripciones)
+            tiene_matriculas = any(m.estudiante_id == estudiante_a_eliminar.id for m in self.matriculas)
+            
+            if tiene_inscripciones or tiene_matriculas:
+                print(f"⚠️  ADVERTENCIA: El estudiante {estudiante_a_eliminar.nombre_completo()} tiene registros asociados:")
+                if tiene_inscripciones:
+                    print("  • Inscripciones activas")
+                if tiene_matriculas:
+                    print("  • Matrículas registradas")
+                
+                confirmar = input("¿Desea eliminarlo junto con todos sus registros? (s/N): ").strip().lower()
+                if confirmar != 's':
+                    print("Eliminación cancelada")
+                    return False
+                
+                # Eliminar inscripciones asociadas
+                self.inscripciones = [i for i in self.inscripciones if i.estudiante_id != estudiante_a_eliminar.id]
+                
+                # Eliminar matrículas asociadas
+                self.matriculas = [m for m in self.matriculas if m.estudiante_id != estudiante_a_eliminar.id]
+            
+            # Eliminar estudiante
+            self.estudiantes.remove(estudiante_a_eliminar)
+            print(f"✅ Estudiante {estudiante_a_eliminar.nombre_completo()} eliminado exitosamente")
+            return True
+            
+        except ValueError:
+            print("❌ Error: Debe ingresar un número válido")
+            return False
+    
     def listar_estudiantes(self):
         """Lista todos los estudiantes"""
         if not self.estudiantes:
@@ -181,6 +323,142 @@ class InterfazUsuario:
         self.cursos.append(nuevo_curso)
         print(f"✅ Curso creado exitosamente con código: {codigo}")
         return True
+    
+    def editar_curso(self):
+        """Interfaz para editar un curso existente"""
+        print("\n--- EDITAR CURSO ---")
+        
+        if not self.cursos:
+            print("❌ No hay cursos registrados.")
+            return False
+        
+        # Mostrar cursos disponibles
+        print("\nCursos disponibles:")
+        for i, curso in enumerate(self.cursos, 1):
+            print(f"{i}. {curso.codigo} - {curso.nombre}")
+        
+        try:
+            indice = int(input("\nSeleccione curso a editar (número): ")) - 1
+            if indice < 0 or indice >= len(self.cursos):
+                print("❌ Error: Selección inválida")
+                return False
+            
+            curso_a_editar = self.cursos[indice]
+            
+            print(f"\n--- EDITANDO: {curso_a_editar.nombre} ---")
+            print("Ingrese los nuevos datos (presione Enter para mantener el valor actual):")
+            
+            # Recopilar nuevos datos
+            print(f"Código actual: {curso_a_editar.codigo}")
+            nuevo_codigo = input("Nuevo código: ").strip().upper()
+            if not nuevo_codigo:
+                nuevo_codigo = curso_a_editar.codigo
+            
+            print(f"Nombre actual: {curso_a_editar.nombre}")
+            nuevo_nombre = input("Nuevo nombre: ").strip()
+            if not nuevo_nombre:
+                nuevo_nombre = curso_a_editar.nombre
+            
+            print(f"Créditos actuales: {curso_a_editar.creditos}")
+            nuevos_creditos_str = input("Nuevos créditos: ").strip()
+            if nuevos_creditos_str:
+                try:
+                    nuevos_creditos = int(nuevos_creditos_str)
+                except ValueError:
+                    print("❌ Error: Los créditos deben ser un número entero")
+                    return False
+                
+                if not validar_creditos(nuevos_creditos):
+                    print("❌ Error: Los créditos deben estar entre 1 y 10")
+                    return False
+            else:
+                nuevos_creditos = curso_a_editar.creditos
+            
+            print(f"Docente actual: {curso_a_editar.docente}")
+            nuevo_docente = input("Nuevo docente: ").strip()
+            if not nuevo_docente:
+                nuevo_docente = curso_a_editar.docente
+            
+            # Verificar duplicado de código (excluyendo el curso actual)
+            for curso in self.cursos:
+                if curso.codigo != curso_a_editar.codigo and curso.codigo == nuevo_codigo:
+                    print(f"❌ Error: Ya existe otro curso con código {nuevo_codigo}")
+                    return False
+            
+            # Actualizar curso
+            # Si cambia el código, también actualizar referencias en inscripciones y matrículas
+            if nuevo_codigo != curso_a_editar.codigo:
+                for inscripcion in self.inscripciones:
+                    if inscripcion.curso_codigo == curso_a_editar.codigo:
+                        inscripcion.curso_codigo = nuevo_codigo
+                
+                for matricula in self.matriculas:
+                    if matricula.curso_codigo == curso_a_editar.codigo:
+                        matricula.curso_codigo = nuevo_codigo
+            
+            curso_a_editar.codigo = nuevo_codigo
+            curso_a_editar.nombre = nuevo_nombre
+            curso_a_editar.creditos = nuevos_creditos
+            curso_a_editar.docente = nuevo_docente
+            
+            print("✅ Curso actualizado exitosamente")
+            return True
+            
+        except ValueError:
+            print("❌ Error: Debe ingresar un número válido")
+            return False
+    
+    def eliminar_curso(self):
+        """Interfaz para eliminar un curso"""
+        print("\n--- ELIMINAR CURSO ---")
+        
+        if not self.cursos:
+            print("❌ No hay cursos registrados.")
+            return False
+        
+        # Mostrar cursos disponibles
+        print("\nCursos disponibles:")
+        for i, curso in enumerate(self.cursos, 1):
+            print(f"{i}. {curso.codigo} - {curso.nombre}")
+        
+        try:
+            indice = int(input("\nSeleccione curso a eliminar (número): ")) - 1
+            if indice < 0 or indice >= len(self.cursos):
+                print("❌ Error: Selección inválida")
+                return False
+            
+            curso_a_eliminar = self.cursos[indice]
+            
+            # Verificar si tiene inscripciones o matrículas
+            tiene_inscripciones = any(i.curso_codigo == curso_a_eliminar.codigo for i in self.inscripciones)
+            tiene_matriculas = any(m.curso_codigo == curso_a_eliminar.codigo for m in self.matriculas)
+            
+            if tiene_inscripciones or tiene_matriculas:
+                print(f"⚠️  ADVERTENCIA: El curso {curso_a_eliminar.nombre} tiene registros asociados:")
+                if tiene_inscripciones:
+                    print("  • Inscripciones activas")
+                if tiene_matriculas:
+                    print("  • Matrículas registradas")
+                
+                confirmar = input("¿Desea eliminarlo junto con todos sus registros? (s/N): ").strip().lower()
+                if confirmar != 's':
+                    print("Eliminación cancelada")
+                    return False
+                
+                # Eliminar inscripciones asociadas
+                self.inscripciones = [i for i in self.inscripciones if i.curso_codigo != curso_a_eliminar.codigo]
+                
+                # Eliminar matrículas asociadas
+                self.matriculas = [m for m in self.matriculas if m.curso_codigo != curso_a_eliminar.codigo]
+            
+            # Eliminar curso
+            self.cursos.remove(curso_a_eliminar)
+            print(f"✅ Curso {curso_a_eliminar.nombre} eliminado exitosamente")
+            return True
+            
+        except ValueError:
+            print("❌ Error: Debe ingresar un número válido")
+            return False
     
     def listar_cursos(self):
         """Lista todos los cursos"""
@@ -257,6 +535,188 @@ class InterfazUsuario:
         print(f"   Estudiante: {estudiante_seleccionado.nombre_completo()}")
         print(f"   Curso: {curso_seleccionado.nombre}")
         return True
+    
+    def editar_inscripcion(self):
+        """Interfaz para editar una inscripción existente"""
+        print("\n--- EDITAR INSCRIPCIÓN ---")
+        
+        if not self.inscripciones:
+            print("❌ No hay inscripciones registradas.")
+            return False
+        
+        # Mostrar inscripciones disponibles
+        print("\nInscripciones disponibles:")
+        for i, inscripcion in enumerate(self.inscripciones, 1):
+            estudiante = self.consultas.buscar_estudiante_por_id(inscripcion.estudiante_id)
+            curso = self.consultas.buscar_curso_por_codigo(inscripcion.curso_codigo)
+            
+            nombre_estudiante = estudiante.nombre_completo() if estudiante else "N/A"
+            nombre_curso = curso.nombre if curso else "N/A"
+            
+            print(f"{i}. {inscripcion.id} - {nombre_estudiante} en {nombre_curso}")
+        
+        try:
+            indice = int(input("\nSeleccione inscripción a editar (número): ")) - 1
+            if indice < 0 or indice >= len(self.inscripciones):
+                print("❌ Error: Selección inválida")
+                return False
+            
+            inscripcion_a_editar = self.inscripciones[indice]
+            
+            # Verificar si ya tiene matrícula asociada
+            tiene_matricula = any(m.inscripcion_id == inscripcion_a_editar.id for m in self.matriculas)
+            if tiene_matricula:
+                print("⚠️  Esta inscripción ya tiene una matrícula asociada.")
+                print("Solo se puede modificar la fecha de inscripción.")
+                
+                print(f"Fecha actual: {inscripcion_a_editar.fecha_inscripcion}")
+                nueva_fecha = input("Nueva fecha (YYYY-MM-DD) o Enter para mantener: ").strip()
+                
+                if nueva_fecha and not validar_fecha(nueva_fecha):
+                    print("❌ Error: Formato de fecha inválido")
+                    return False
+                
+                if nueva_fecha:
+                    inscripcion_a_editar.fecha_inscripcion = nueva_fecha
+                    print("✅ Fecha de inscripción actualizada")
+                else:
+                    print("No se realizaron cambios")
+                return True
+            
+            print(f"\n--- EDITANDO INSCRIPCIÓN: {inscripcion_a_editar.id} ---")
+            
+            # Cambiar estudiante
+            print("\n1. Cambiar estudiante:")
+            print(f"   Estudiante actual: {self.consultas.buscar_estudiante_por_id(inscripcion_a_editar.estudiante_id).nombre_completo()}")
+            cambiar_estudiante = input("¿Cambiar estudiante? (s/N): ").strip().lower()
+            
+            nuevo_estudiante_id = inscripcion_a_editar.estudiante_id
+            if cambiar_estudiante == 's':
+                print("\nEstudiantes disponibles:")
+                for i, estudiante in enumerate(self.estudiantes, 1):
+                    print(f"{i}. {estudiante.documento} - {estudiante.nombre_completo()}")
+                
+                try:
+                    indice_est = int(input("Seleccione nuevo estudiante (número): ")) - 1
+                    if 0 <= indice_est < len(self.estudiantes):
+                        nuevo_estudiante_id = self.estudiantes[indice_est].id
+                    else:
+                        print("❌ Selección inválida, manteniendo estudiante actual")
+                except ValueError:
+                    print("❌ Entrada inválida, manteniendo estudiante actual")
+            
+            # Cambiar curso
+            print("\n2. Cambiar curso:")
+            print(f"   Curso actual: {self.consultas.buscar_curso_por_codigo(inscripcion_a_editar.curso_codigo).nombre}")
+            cambiar_curso = input("¿Cambiar curso? (s/N): ").strip().lower()
+            
+            nuevo_curso_codigo = inscripcion_a_editar.curso_codigo
+            if cambiar_curso == 's':
+                print("\nCursos disponibles:")
+                for i, curso in enumerate(self.cursos, 1):
+                    print(f"{i}. {curso.codigo} - {curso.nombre}")
+                
+                try:
+                    indice_curso = int(input("Seleccione nuevo curso (número): ")) - 1
+                    if 0 <= indice_curso < len(self.cursos):
+                        nuevo_curso_codigo = self.cursos[indice_curso].codigo
+                    else:
+                        print("❌ Selección inválida, manteniendo curso actual")
+                except ValueError:
+                    print("❌ Entrada inválida, manteniendo curso actual")
+            
+            # Verificar que no exista duplicado
+            if (nuevo_estudiante_id != inscripcion_a_editar.estudiante_id or 
+                nuevo_curso_codigo != inscripcion_a_editar.curso_codigo):
+                
+                for inscripcion in self.inscripciones:
+                    if (inscripcion.id != inscripcion_a_editar.id and
+                        inscripcion.estudiante_id == nuevo_estudiante_id and 
+                        inscripcion.curso_codigo == nuevo_curso_codigo):
+                        print("❌ Error: Ya existe una inscripción con esta combinación")
+                        return False
+            
+            # Cambiar fecha
+            print(f"\n3. Fecha actual: {inscripcion_a_editar.fecha_inscripcion}")
+            nueva_fecha = input("Nueva fecha (YYYY-MM-DD) o Enter para mantener: ").strip()
+            if nueva_fecha and not validar_fecha(nueva_fecha):
+                print("❌ Error: Formato de fecha inválido")
+                return False
+            
+            # Aplicar cambios
+            inscripcion_a_editar.estudiante_id = nuevo_estudiante_id
+            inscripcion_a_editar.curso_codigo = nuevo_curso_codigo
+            if nueva_fecha:
+                inscripcion_a_editar.fecha_inscripcion = nueva_fecha
+            
+            print("✅ Inscripción actualizada exitosamente")
+            return True
+            
+        except ValueError:
+            print("❌ Error: Debe ingresar un número válido")
+            return False
+    
+    def eliminar_inscripcion(self):
+        """Interfaz para eliminar una inscripción"""
+        print("\n--- ELIMINAR INSCRIPCIÓN ---")
+        
+        if not self.inscripciones:
+            print("❌ No hay inscripciones registradas.")
+            return False
+        
+        # Mostrar inscripciones disponibles
+        print("\nInscripciones disponibles:")
+        for i, inscripcion in enumerate(self.inscripciones, 1):
+            estudiante = self.consultas.buscar_estudiante_por_id(inscripcion.estudiante_id)
+            curso = self.consultas.buscar_curso_por_codigo(inscripcion.curso_codigo)
+            
+            nombre_estudiante = estudiante.nombre_completo() if estudiante else "N/A"
+            nombre_curso = curso.nombre if curso else "N/A"
+            
+            # Verificar si tiene matrícula
+            tiene_matricula = any(m.inscripcion_id == inscripcion.id for m in self.matriculas)
+            estado = " [CON MATRÍCULA]" if tiene_matricula else ""
+            
+            print(f"{i}. {inscripcion.id} - {nombre_estudiante} en {nombre_curso}{estado}")
+        
+        try:
+            indice = int(input("\nSeleccione inscripción a eliminar (número): ")) - 1
+            if indice < 0 or indice >= len(self.inscripciones):
+                print("❌ Error: Selección inválida")
+                return False
+            
+            inscripcion_a_eliminar = self.inscripciones[indice]
+            
+            # Verificar si tiene matrícula asociada
+            matriculas_asociadas = [m for m in self.matriculas if m.inscripcion_id == inscripcion_a_eliminar.id]
+            
+            if matriculas_asociadas:
+                print(f"⚠️  ADVERTENCIA: Esta inscripción tiene {len(matriculas_asociadas)} matrícula(s) asociada(s)")
+                confirmar = input("¿Desea eliminarla junto con sus matrículas? (s/N): ").strip().lower()
+                if confirmar != 's':
+                    print("Eliminación cancelada")
+                    return False
+                
+                # Eliminar matrículas asociadas
+                self.matriculas = [m for m in self.matriculas if m.inscripcion_id != inscripcion_a_eliminar.id]
+                print(f"  • {len(matriculas_asociadas)} matrícula(s) eliminada(s)")
+            
+            # Eliminar inscripción
+            self.inscripciones.remove(inscripcion_a_eliminar)
+            
+            estudiante = self.consultas.buscar_estudiante_por_id(inscripcion_a_eliminar.estudiante_id)
+            curso = self.consultas.buscar_curso_por_codigo(inscripcion_a_eliminar.curso_codigo)
+            
+            nombre_estudiante = estudiante.nombre_completo() if estudiante else "N/A"
+            nombre_curso = curso.nombre if curso else "N/A"
+            
+            print(f"✅ Inscripción eliminada exitosamente")
+            print(f"   {nombre_estudiante} - {nombre_curso}")
+            return True
+            
+        except ValueError:
+            print("❌ Error: Debe ingresar un número válido")
+            return False
     
     def listar_inscripciones(self):
         """Lista todas las inscripciones"""
@@ -372,6 +832,63 @@ class InterfazUsuario:
             
             matricula_seleccionada.nota = nota
             print(f"✅ Nota asignada exitosamente: {nota}")
+            return True
+            
+        except ValueError:
+            print("❌ Error: Debe ingresar un número válido")
+            return False
+    
+    def eliminar_matricula(self):
+        """Interfaz para eliminar una matrícula"""
+        print("\n--- ELIMINAR MATRÍCULA ---")
+        
+        if not self.matriculas:
+            print("❌ No hay matrículas registradas.")
+            return False
+        
+        # Mostrar matrículas disponibles
+        print("\nMatrículas disponibles:")
+        for i, matricula in enumerate(self.matriculas, 1):
+            estudiante = self.consultas.buscar_estudiante_por_id(matricula.estudiante_id)
+            curso = self.consultas.buscar_curso_por_codigo(matricula.curso_codigo)
+            
+            nombre_estudiante = estudiante.nombre_completo() if estudiante else "N/A"
+            nombre_curso = curso.nombre if curso else "N/A"
+            nota_str = f"{matricula.nota:.1f}" if matricula.nota is not None else "Sin nota"
+            
+            print(f"{i}. {matricula.id} - {nombre_estudiante} en {nombre_curso} ({nota_str})")
+        
+        try:
+            indice = int(input("\nSeleccione matrícula a eliminar (número): ")) - 1
+            if indice < 0 or indice >= len(self.matriculas):
+                print("❌ Error: Selección inválida")
+                return False
+            
+            matricula_a_eliminar = self.matriculas[indice]
+            
+            # Mostrar información de la matrícula
+            estudiante = self.consultas.buscar_estudiante_por_id(matricula_a_eliminar.estudiante_id)
+            curso = self.consultas.buscar_curso_por_codigo(matricula_a_eliminar.curso_codigo)
+            
+            nombre_estudiante = estudiante.nombre_completo() if estudiante else "N/A"
+            nombre_curso = curso.nombre if curso else "N/A"
+            nota_str = f"{matricula_a_eliminar.nota:.1f}" if matricula_a_eliminar.nota is not None else "Sin nota"
+            
+            print(f"\n⚠️  Matrícula a eliminar:")
+            print(f"   ID: {matricula_a_eliminar.id}")
+            print(f"   Estudiante: {nombre_estudiante}")
+            print(f"   Curso: {nombre_curso}")
+            print(f"   Nota: {nota_str}")
+            print(f"   Fecha: {matricula_a_eliminar.fecha_matricula}")
+            
+            confirmar = input("\n¿Está seguro de eliminar esta matrícula? (s/N): ").strip().lower()
+            if confirmar != 's':
+                print("Eliminación cancelada")
+                return False
+            
+            # Eliminar matrícula
+            self.matriculas.remove(matricula_a_eliminar)
+            print(f"✅ Matrícula {matricula_a_eliminar.id} eliminada exitosamente")
             return True
             
         except ValueError:
