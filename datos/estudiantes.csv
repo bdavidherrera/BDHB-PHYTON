@@ -1,0 +1,11 @@
+id,documento,nombres,apellidos,correo,fecha_nacimiento
+est001,12345678,Juan Carlos,Pérez García,juan.perez@universidad.edu.co,1995-06-15
+est002,87654321,María Elena,González López,maria.gonzalez@correo.com,1996-08-22
+est003,11111111,Carlos Alberto,Ruiz Mendoza,carlos.ruiz@email.co,1994-03-10
+est004,22222222,Ana Sofía,Martínez Silva,ana.martinez@gmail.com,1997-11-05
+est005,33333333,Luis Fernando,Rodríguez Torres,luis.rodriguez@yahoo.com,1995-12-18
+est006,44444444,Diana Patricia,López Herrera,diana.lopez@hotmail.com,1996-04-25
+est007,55555555,Andrés Felipe,Castro Morales,andres.castro@outlook.com,1998-01-12
+est008,66666666,Valentina,Ramírez Díaz,valentina.ramirez@universidad.edu.co,1997-09-30
+est009,77777777,Santiago,Vargas Ortiz,santiago.vargas@correo.com,1995-07-08
+est010,88888888,Isabella,Torres Jiménez,isabella.torres@email.co,1996-10-16
