@@ -1,8 +1,6 @@
 # src/modelos.py - Versión actualizada con modelo de Inscripción
 from dataclasses import dataclass
-from datetime import datetime
-from typing import List, Dict, Optional
-import re
+from typing import  Optional
 
 @dataclass
 class Estudiante:

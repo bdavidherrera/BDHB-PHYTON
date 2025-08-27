@@ -1,8 +1,6 @@
 # src/main.py - Versión actualizada con todas las funcionalidades
-from src.modelos import Estudiante, Curso, Inscripcion, Matricula
 from src.persistencia import PersistenciaCSV
 from src.ui import InterfazUsuario
-from src.validaciones import ValidacionError
 
 def main():
     """Función principal del sistema MiniSIGA"""

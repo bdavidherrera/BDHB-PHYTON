@@ -1,9 +1,8 @@
 # src/ui.py - Versión completa con editar y eliminar
-from typing import List, Optional
+from typing import List 
 from datetime import datetime
-import uuid
 from src.modelos import Estudiante, Curso, Inscripcion, Matricula
-from src.validaciones import validar_estudiante_completo, validar_correo, validar_documento, validar_fecha, validar_creditos, validar_nota
+from src.validaciones import validar_estudiante_completo, validar_fecha, validar_creditos, validar_nota
 from src.consultas import ConsultasAcademicas
 
 class InterfazUsuario:
@@ -276,11 +275,11 @@ class InterfazUsuario:
             return
         
         print(f"\n--- LISTA DE ESTUDIANTES ({len(self.estudiantes)}) ---")
-        print(f"{'ID':<10} {'Documento':<12} {'Nombres':<20} {'Apellidos':<20} {'Correo':<25}")
-        print("-" * 87)
+        print(f"{'ID':<10} {'Documento':<12} {'Nombres':<20} {'Apellidos':<20} {'Correo':<25} {'fecha_nacimiento':<40}")
+        print("-" * 140)
         
         for estudiante in self.estudiantes:
-            print(f"{estudiante.id:<10} {estudiante.documento:<12} {estudiante.nombres:<20} {estudiante.apellidos:<20} {estudiante.correo:<25}")
+            print(f"{estudiante.id:<10} {estudiante.documento:<12} {estudiante.nombres:<20} {estudiante.apellidos:<20} {estudiante.correo:<25} {estudiante.fecha_nacimiento:<1}")
     
     def crear_curso(self):
         """Interfaz para crear un nuevo curso"""

@@ -1,5 +1,5 @@
 # src/consultas.py - Versión actualizada con inscripciones
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Optional
 from src.modelos import Estudiante, Curso, Inscripcion, Matricula
 
 class ConsultasAcademicas:

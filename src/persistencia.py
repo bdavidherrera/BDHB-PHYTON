@@ -2,7 +2,7 @@
 import csv
 import json
 import os
-from typing import List, Dict, Any
+from typing import List
 from src.modelos import Estudiante, Curso, Inscripcion, Matricula
 
 class PersistenciaCSV:

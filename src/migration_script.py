@@ -1,7 +1,6 @@
 # migration_script.py - Script para migrar datos existentes al nuevo formato
 import csv
-import uuid
-from datetime import datetime
+
 
 def migrar_matriculas_a_inscripciones():
     """
