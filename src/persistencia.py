@@ -1,9 +1,9 @@
-# src/persistencia.py
+# src/persistencia.py - Versión actualizada con manejo de inscripciones
 import csv
 import json
 import os
 from typing import List, Dict, Any
-from src.modelos import Estudiante, Curso, Matricula
+from src.modelos import Estudiante, Curso, Inscripcion, Matricula
 
 class PersistenciaCSV:
     """Maneja la persistencia de datos en archivos CSV"""
@@ -105,8 +105,50 @@ class PersistenciaCSV:
                         'docente': curso.docente
                     })
     
+    def cargar_inscripciones(self) -> List[Inscripcion]:
+        """Carga inscripciones desde CSV"""
+        archivo = os.path.join(self.base_path, "inscripciones.csv")
+        inscripciones = []
+        
+        if not os.path.exists(archivo):
+            return inscripciones
+        
+        try:
+            with open(archivo, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    inscripcion = Inscripcion(
+                        id=row['id'].strip(),
+                        estudiante_id=row['estudiante_id'].strip(),
+                        curso_codigo=row['curso_codigo'].strip(),
+                        fecha_inscripcion=row['fecha_inscripcion'].strip()
+                    )
+                    inscripciones.append(inscripcion)
+        except Exception as e:
+            print(f"Error cargando inscripciones: {e}")
+        
+        return inscripciones
+    
+    def guardar_inscripciones(self, inscripciones: List[Inscripcion]):
+        """Guarda inscripciones en CSV"""
+        archivo = os.path.join(self.base_path, "inscripciones.csv")
+        
+        with open(archivo, 'w', newline='', encoding='utf-8') as f:
+            if inscripciones:
+                fieldnames = ['id', 'estudiante_id', 'curso_codigo', 'fecha_inscripcion']
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                
+                for inscripcion in inscripciones:
+                    writer.writerow({
+                        'id': inscripcion.id,
+                        'estudiante_id': inscripcion.estudiante_id,
+                        'curso_codigo': inscripcion.curso_codigo,
+                        'fecha_inscripcion': inscripcion.fecha_inscripcion
+                    })
+    
     def cargar_matriculas(self) -> List[Matricula]:
-        """Carga matrículas desde CSV"""
+        """Carga matrículas desde CSV - ahora incluye inscripcion_id"""
         archivo = os.path.join(self.base_path, "matriculas.csv")
         matriculas = []
         
@@ -124,8 +166,15 @@ class PersistenciaCSV:
                         except ValueError:
                             nota = None
                     
+                    # Manejar compatibilidad con formato anterior
+                    inscripcion_id = row.get('inscripcion_id', '').strip()
+                    if not inscripcion_id:
+                        # Si no hay inscripcion_id, generar uno temporal
+                        inscripcion_id = f"temp_{row['id'].strip()}"
+                    
                     matricula = Matricula(
                         id=row['id'].strip(),
+                        inscripcion_id=inscripcion_id,
                         estudiante_id=row['estudiante_id'].strip(),
                         curso_codigo=row['curso_codigo'].strip(),
                         fecha_matricula=row['fecha_matricula'].strip(),
@@ -138,25 +187,27 @@ class PersistenciaCSV:
         return matriculas
     
     def guardar_matriculas(self, matriculas: List[Matricula]):
-        """Guarda matrículas en CSV"""
+        """Guarda matrículas en CSV - ahora incluye inscripcion_id"""
         archivo = os.path.join(self.base_path, "matriculas.csv")
         
         with open(archivo, 'w', newline='', encoding='utf-8') as f:
             if matriculas:
-                fieldnames = ['id', 'estudiante_id', 'curso_codigo', 'fecha_matricula', 'nota']
+                fieldnames = ['id', 'inscripcion_id', 'estudiante_id', 'curso_codigo', 'fecha_matricula', 'nota']
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 
                 for matricula in matriculas:
                     writer.writerow({
                         'id': matricula.id,
+                        'inscripcion_id': matricula.inscripcion_id,
                         'estudiante_id': matricula.estudiante_id,
                         'curso_codigo': matricula.curso_codigo,
                         'fecha_matricula': matricula.fecha_matricula,
                         'nota': matricula.nota if matricula.nota is not None else ''
                     })
     
-    def exportar_json(self, estudiantes: List[Estudiante], cursos: List[Curso], matriculas: List[Matricula]) -> str:
+    def exportar_json(self, estudiantes: List[Estudiante], cursos: List[Curso], 
+                     inscripciones: List[Inscripcion], matriculas: List[Matricula]) -> str:
         """Exporta todos los datos a formato JSON"""
         datos = {
             'estudiantes': [
@@ -177,9 +228,18 @@ class PersistenciaCSV:
                     'docente': c.docente
                 } for c in cursos
             ],
+            'inscripciones': [
+                {
+                    'id': i.id,
+                    'estudiante_id': i.estudiante_id,
+                    'curso_codigo': i.curso_codigo,
+                    'fecha_inscripcion': i.fecha_inscripcion
+                } for i in inscripciones
+            ],
             'matriculas': [
                 {
                     'id': m.id,
+                    'inscripcion_id': m.inscripcion_id,
                     'estudiante_id': m.estudiante_id,
                     'curso_codigo': m.curso_codigo,
                     'fecha_matricula': m.fecha_matricula,

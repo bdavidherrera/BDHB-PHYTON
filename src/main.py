@@ -1,5 +1,5 @@
-# src/main.py
-from src.modelos import Estudiante, Curso, Matricula
+# src/main.py - Versión actualizada con inscripciones
+from src.modelos import Estudiante, Curso, Inscripcion, Matricula
 from src.persistencia import PersistenciaCSV
 from src.ui import InterfazUsuario
 from src.validaciones import ValidacionError
@@ -16,12 +16,13 @@ def main():
     print("Cargando datos...")
     estudiantes = persistencia.cargar_estudiantes()
     cursos = persistencia.cargar_cursos()
+    inscripciones = persistencia.cargar_inscripciones()
     matriculas = persistencia.cargar_matriculas()
     
-    print(f"Datos cargados: {len(estudiantes)} estudiantes, {len(cursos)} cursos, {len(matriculas)} matrículas")
+    print(f"Datos cargados: {len(estudiantes)} estudiantes, {len(cursos)} cursos, {len(inscripciones)} inscripciones, {len(matriculas)} matrículas")
     
     # Inicializar interfaz de usuario
-    ui = InterfazUsuario(estudiantes, cursos, matriculas)
+    ui = InterfazUsuario(estudiantes, cursos, inscripciones, matriculas)
     
     # Loop principal del programa
     while True:
@@ -34,6 +35,7 @@ def main():
                 print("Guardando datos...")
                 persistencia.guardar_estudiantes(estudiantes)
                 persistencia.guardar_cursos(cursos)
+                persistencia.guardar_inscripciones(inscripciones)
                 persistencia.guardar_matriculas(matriculas)
                 print("¡Datos guardados exitosamente!")
                 print("¡Gracias por usar MiniSIGA!")
@@ -78,6 +80,27 @@ def main():
                         print("❌ Opción no válida")
             
             elif opcion == "3":
+                # Menú de inscripciones
+                while True:
+                    ui.mostrar_menu_inscripciones()
+                    sub_opcion = input("Seleccione una opción: ").strip()
+                    
+                    if sub_opcion == "0":
+                        break
+                    elif sub_opcion == "1":
+                        ui.crear_inscripcion()
+                    elif sub_opcion == "2":
+                        print("Función de editar inscripción no implementada en esta versión")
+                    elif sub_opcion == "3":
+                        print("Función de eliminar inscripción no implementada en esta versión")
+                    elif sub_opcion == "4":
+                        ui.listar_inscripciones()
+                    elif sub_opcion == "5":
+                        ui.ver_inscripciones_pendientes()
+                    else:
+                        print("❌ Opción no válida")
+            
+            elif opcion == "4":
                 # Menú de matrículas
                 while True:
                     ui.mostrar_menu_matriculas()
@@ -96,7 +119,7 @@ def main():
                     else:
                         print("❌ Opción no válida")
             
-            elif opcion == "4":
+            elif opcion == "5":
                 # Menú de consultas y reportes
                 while True:
                     ui.mostrar_menu_consultas()
@@ -123,10 +146,10 @@ def main():
                     else:
                         print("❌ Opción no válida")
             
-            elif opcion == "5":
+            elif opcion == "6":
                 # Exportar a JSON
                 try:
-                    archivo = persistencia.exportar_json(estudiantes, cursos, matriculas)
+                    archivo = persistencia.exportar_json(estudiantes, cursos, inscripciones, matriculas)
                     print(f"✅ Datos exportados exitosamente a: {archivo}")
                 except Exception as e:
                     print(f"❌ Error al exportar: {e}")
@@ -140,6 +163,7 @@ def main():
             print("Guardando datos...")
             persistencia.guardar_estudiantes(estudiantes)
             persistencia.guardar_cursos(cursos)
+            persistencia.guardar_inscripciones(inscripciones)
             persistencia.guardar_matriculas(matriculas)
             print("¡Datos guardados exitosamente!")
             break

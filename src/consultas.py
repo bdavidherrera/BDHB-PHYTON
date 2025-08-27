@@ -1,15 +1,15 @@
-
-
-# src/consultas.py
+# src/consultas.py - Versión actualizada con inscripciones
 from typing import List, Tuple, Dict, Optional
-from src.modelos import Estudiante, Curso, Matricula
+from src.modelos import Estudiante, Curso, Inscripcion, Matricula
 
 class ConsultasAcademicas:
     """Clase para realizar consultas y reportes del sistema"""
     
-    def __init__(self, estudiantes: List[Estudiante], cursos: List[Curso], matriculas: List[Matricula]):
+    def __init__(self, estudiantes: List[Estudiante], cursos: List[Curso], 
+                 inscripciones: List[Inscripcion], matriculas: List[Matricula]):
         self.estudiantes = estudiantes
         self.cursos = cursos
+        self.inscripciones = inscripciones
         self.matriculas = matriculas
     
     def buscar_estudiante_por_documento(self, documento: str) -> Optional[Estudiante]:
@@ -61,13 +61,13 @@ class ConsultasAcademicas:
         return reprobados
     
     def obtener_creditos_inscritos_por_estudiante(self, estudiante_id: str) -> int:
-        """Calcula total de créditos inscritos por un estudiante"""
+        """Calcula total de créditos inscritos por un estudiante (basado en inscripciones)"""
         creditos_total = 0
         
-        matriculas_estudiante = [m for m in self.matriculas if m.estudiante_id == estudiante_id]
+        inscripciones_estudiante = [i for i in self.inscripciones if i.estudiante_id == estudiante_id]
         
-        for matricula in matriculas_estudiante:
-            curso = self.buscar_curso_por_codigo(matricula.curso_codigo)
+        for inscripcion in inscripciones_estudiante:
+            curso = self.buscar_curso_por_codigo(inscripcion.curso_codigo)
             if curso:
                 creditos_total += curso.creditos
         
@@ -85,6 +85,13 @@ class ConsultasAcademicas:
         for curso in self.cursos:
             if curso.codigo == codigo:
                 return curso
+        return None
+    
+    def buscar_inscripcion_por_id(self, inscripcion_id: str) -> Optional[Inscripcion]:
+        """Busca inscripción por ID"""
+        for inscripcion in self.inscripciones:
+            if inscripcion.id == inscripcion_id:
+                return inscripcion
         return None
     
     def obtener_dominios_correo_unicos(self) -> List[str]:
@@ -116,6 +123,32 @@ class ConsultasAcademicas:
                 der = medio - 1
         
         return None
-
-
-
+    
+    def obtener_inscripciones_sin_matricular(self) -> List[Tuple[Inscripcion, Estudiante, Curso]]:
+        """Obtiene inscripciones que aún no se han convertido en matrículas"""
+        inscripciones_ids = {m.inscripcion_id for m in self.matriculas}
+        inscripciones_pendientes = []
+        
+        for inscripcion in self.inscripciones:
+            if inscripcion.id not in inscripciones_ids:
+                estudiante = self.buscar_estudiante_por_id(inscripcion.estudiante_id)
+                curso = self.buscar_curso_por_codigo(inscripcion.curso_codigo)
+                
+                if estudiante and curso:
+                    inscripciones_pendientes.append((inscripcion, estudiante, curso))
+        
+        return inscripciones_pendientes
+    
+    def obtener_matriculas_con_inscripcion(self) -> List[Tuple[Matricula, Inscripcion, Estudiante, Curso]]:
+        """Obtiene matrículas con información completa de inscripción, estudiante y curso"""
+        matriculas_completas = []
+        
+        for matricula in self.matriculas:
+            inscripcion = self.buscar_inscripcion_por_id(matricula.inscripcion_id)
+            estudiante = self.buscar_estudiante_por_id(matricula.estudiante_id)
+            curso = self.buscar_curso_por_codigo(matricula.curso_codigo)
+            
+            if inscripcion and estudiante and curso:
+                matriculas_completas.append((matricula, inscripcion, estudiante, curso))
+        
+        return matriculas_completas

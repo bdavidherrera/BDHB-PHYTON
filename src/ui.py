@@ -1,19 +1,21 @@
-# src/ui.py
+# src/ui.py - Versión actualizada con manejo de inscripciones
 from typing import List, Optional
 from datetime import datetime
 import uuid
-from src.modelos import Estudiante, Curso, Matricula
+from src.modelos import Estudiante, Curso, Inscripcion, Matricula
 from src.validaciones import validar_estudiante_completo, validar_correo, validar_documento, validar_fecha, validar_creditos, validar_nota
 from src.consultas import ConsultasAcademicas
 
 class InterfazUsuario:
     """Interfaz de usuario para el sistema MiniSIGA"""
     
-    def __init__(self, estudiantes: List[Estudiante], cursos: List[Curso], matriculas: List[Matricula]):
+    def __init__(self, estudiantes: List[Estudiante], cursos: List[Curso], 
+                 inscripciones: List[Inscripcion], matriculas: List[Matricula]):
         self.estudiantes = estudiantes
         self.cursos = cursos
+        self.inscripciones = inscripciones
         self.matriculas = matriculas
-        self.consultas = ConsultasAcademicas(estudiantes, cursos, matriculas)
+        self.consultas = ConsultasAcademicas(estudiantes, cursos, inscripciones, matriculas)
     
     def mostrar_menu_principal(self):
         """Muestra el menú principal del sistema"""
@@ -22,9 +24,10 @@ class InterfazUsuario:
         print("="*50)
         print("1. Estudiantes")
         print("2. Cursos") 
-        print("3. Matrículas")
-        print("4. Consultas/Reportes")
-        print("5. Exportar JSON")
+        print("3. Inscripciones")
+        print("4. Matrículas")
+        print("5. Consultas/Reportes")
+        print("6. Exportar JSON")
         print("0. Salir")
         print("="*50)
     
@@ -46,10 +49,20 @@ class InterfazUsuario:
         print("4. Listar cursos")
         print("0. Volver al menú principal")
     
+    def mostrar_menu_inscripciones(self):
+        """Muestra el menú de gestión de inscripciones"""
+        print("\n--- GESTIÓN DE INSCRIPCIONES ---")
+        print("1. Crear inscripción")
+        print("2. Editar inscripción")
+        print("3. Eliminar inscripción")
+        print("4. Listar inscripciones")
+        print("5. Ver inscripciones pendientes de matrícula")
+        print("0. Volver al menú principal")
+    
     def mostrar_menu_matriculas(self):
         """Muestra el menú de gestión de matrículas"""
         print("\n--- GESTIÓN DE MATRÍCULAS ---")
-        print("1. Crear matrícula")
+        print("1. Crear matrícula (desde inscripción)")
         print("2. Asignar nota")
         print("3. Eliminar matrícula")
         print("4. Listar matrículas")
@@ -100,7 +113,7 @@ class InterfazUsuario:
                 return False
         
         # Crear estudiante
-        nuevo_id = str(uuid.uuid4())[:8]
+        nuevo_id = f"est{len(self.estudiantes)+1:03d}"
         nuevo_estudiante = Estudiante(
             id=nuevo_id,
             documento=datos['documento'],
@@ -182,9 +195,9 @@ class InterfazUsuario:
         for curso in self.cursos:
             print(f"{curso.codigo:<10} {curso.nombre:<30} {curso.creditos:<10} {curso.docente:<25}")
     
-    def crear_matricula(self):
-        """Interfaz para crear una nueva matrícula"""
-        print("\n--- CREAR NUEVA MATRÍCULA ---")
+    def crear_inscripcion(self):
+        """Interfaz para crear una nueva inscripción"""
+        print("\n--- CREAR NUEVA INSCRIPCIÓN ---")
         
         if not self.estudiantes:
             print("❌ Error: No hay estudiantes registrados")
@@ -224,26 +237,104 @@ class InterfazUsuario:
             print("❌ Error: Debe ingresar un número válido")
             return False
         
-        # Verificar que no esté ya matriculado
-        for matricula in self.matriculas:
-            if (matricula.estudiante_id == estudiante_seleccionado.id and 
-                matricula.curso_codigo == curso_seleccionado.codigo):
-                print(f"❌ Error: El estudiante ya está matriculado en el curso {curso_seleccionado.codigo}")
+        # Verificar que no esté ya inscrito
+        for inscripcion in self.inscripciones:
+            if (inscripcion.estudiante_id == estudiante_seleccionado.id and 
+                inscripcion.curso_codigo == curso_seleccionado.codigo):
+                print(f"❌ Error: El estudiante ya está inscrito en el curso {curso_seleccionado.codigo}")
                 return False
         
-        # Crear matrícula
-        nueva_matricula = Matricula(
-            id=str(uuid.uuid4())[:8],
+        # Crear inscripción
+        nueva_inscripcion = Inscripcion(
+            id=f"ins{len(self.inscripciones)+1:03d}",
             estudiante_id=estudiante_seleccionado.id,
             curso_codigo=curso_seleccionado.codigo,
-            fecha_matricula=datetime.now().strftime('%Y-%m-%d')
+            fecha_inscripcion=datetime.now().strftime('%Y-%m-%d')
         )
         
-        self.matriculas.append(nueva_matricula)
-        print(f"✅ Matrícula creada exitosamente. ID: {nueva_matricula.id}")
+        self.inscripciones.append(nueva_inscripcion)
+        print(f"✅ Inscripción creada exitosamente. ID: {nueva_inscripcion.id}")
         print(f"   Estudiante: {estudiante_seleccionado.nombre_completo()}")
         print(f"   Curso: {curso_seleccionado.nombre}")
         return True
+    
+    def listar_inscripciones(self):
+        """Lista todas las inscripciones"""
+        if not self.inscripciones:
+            print("No hay inscripciones registradas.")
+            return
+        
+        print(f"\n--- LISTA DE INSCRIPCIONES ({len(self.inscripciones)}) ---")
+        print(f"{'ID':<10} {'Estudiante':<25} {'Curso':<15} {'Fecha':<12} {'Estado':<12}")
+        print("-" * 74)
+        
+        for inscripcion in self.inscripciones:
+            estudiante = self.consultas.buscar_estudiante_por_id(inscripcion.estudiante_id)
+            curso = self.consultas.buscar_curso_por_codigo(inscripcion.curso_codigo)
+            
+            nombre_estudiante = estudiante.nombre_completo() if estudiante else "N/A"
+            codigo_curso = curso.codigo if curso else "N/A"
+            
+            # Verificar si ya tiene matrícula
+            tiene_matricula = any(m.inscripcion_id == inscripcion.id for m in self.matriculas)
+            estado = "Matriculado" if tiene_matricula else "Pendiente"
+            
+            print(f"{inscripcion.id:<10} {nombre_estudiante:<25} {codigo_curso:<15} {inscripcion.fecha_inscripcion:<12} {estado:<12}")
+    
+    def ver_inscripciones_pendientes(self):
+        """Muestra inscripciones pendientes de convertir en matrícula"""
+        pendientes = self.consultas.obtener_inscripciones_sin_matricular()
+        
+        if not pendientes:
+            print("✅ No hay inscripciones pendientes de matrícula.")
+            return
+        
+        print(f"\n--- INSCRIPCIONES PENDIENTES DE MATRÍCULA ({len(pendientes)}) ---")
+        print(f"{'ID':<10} {'Estudiante':<25} {'Curso':<15} {'Fecha':<12}")
+        print("-" * 62)
+        
+        for inscripcion, estudiante, curso in pendientes:
+            print(f"{inscripcion.id:<10} {estudiante.nombre_completo():<25} {curso.codigo:<15} {inscripcion.fecha_inscripcion:<12}")
+    
+    def crear_matricula(self):
+        """Interfaz para crear matrícula desde inscripción"""
+        print("\n--- CREAR MATRÍCULA DESDE INSCRIPCIÓN ---")
+        
+        # Obtener inscripciones pendientes
+        pendientes = self.consultas.obtener_inscripciones_sin_matricular()
+        
+        if not pendientes:
+            print("❌ No hay inscripciones pendientes de matrícula.")
+            return False
+        
+        print("\nInscripciones disponibles para matrícula:")
+        for i, (inscripcion, estudiante, curso) in enumerate(pendientes, 1):
+            print(f"{i}. {inscripcion.id} - {estudiante.nombre_completo()} en {curso.nombre}")
+        
+        try:
+            indice = int(input("\nSeleccione inscripción (número): ")) - 1
+            if indice < 0 or indice >= len(pendientes):
+                print("❌ Error: Selección inválida")
+                return False
+            
+            inscripcion_seleccionada, estudiante, curso = pendientes[indice]
+            
+            # Crear matrícula desde inscripción
+            nueva_matricula = Matricula.from_inscripcion(
+                inscripcion_seleccionada, 
+                f"mat{len(self.matriculas)+1:03d}"
+            )
+            
+            self.matriculas.append(nueva_matricula)
+            print(f"✅ Matrícula creada exitosamente. ID: {nueva_matricula.id}")
+            print(f"   Estudiante: {estudiante.nombre_completo()}")
+            print(f"   Curso: {curso.nombre}")
+            print(f"   Basada en inscripción: {inscripcion_seleccionada.id}")
+            return True
+            
+        except ValueError:
+            print("❌ Error: Debe ingresar un número válido")
+            return False
     
     def asignar_nota(self):
         """Interfaz para asignar nota a una matrícula"""
@@ -288,14 +379,14 @@ class InterfazUsuario:
             return False
     
     def listar_matriculas(self):
-        """Lista todas las matrículas"""
+        """Lista todas las matrículas con información completa"""
         if not self.matriculas:
             print("No hay matrículas registradas.")
             return
         
         print(f"\n--- LISTA DE MATRÍCULAS ({len(self.matriculas)}) ---")
-        print(f"{'ID':<10} {'Estudiante':<25} {'Curso':<15} {'Fecha':<12} {'Nota':<6}")
-        print("-" * 68)
+        print(f"{'ID':<10} {'Inscr.ID':<10} {'Estudiante':<25} {'Curso':<15} {'Fecha':<12} {'Nota':<6}")
+        print("-" * 88)
         
         for matricula in self.matriculas:
             estudiante = self.consultas.buscar_estudiante_por_id(matricula.estudiante_id)
@@ -305,8 +396,9 @@ class InterfazUsuario:
             codigo_curso = curso.codigo if curso else "N/A"
             nota_str = f"{matricula.nota:.1f}" if matricula.nota is not None else "---"
             
-            print(f"{matricula.id:<10} {nombre_estudiante:<25} {codigo_curso:<15} {matricula.fecha_matricula:<12} {nota_str:<6}")
+            print(f"{matricula.id:<10} {matricula.inscripcion_id:<10} {nombre_estudiante:<25} {codigo_curso:<15} {matricula.fecha_matricula:<12} {nota_str:<6}")
     
+    # Métodos de consultas (mantienen la misma funcionalidad)
     def ejecutar_consulta_buscar_documento(self):
         """Ejecuta consulta de búsqueda por documento"""
         documento = input("Ingrese documento a buscar: ").strip()
