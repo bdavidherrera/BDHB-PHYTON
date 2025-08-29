@@ -196,10 +196,10 @@ class InterfazUsuario:
             for estudiante in self.estudiantes:
                 if estudiante.id != estudiante_a_editar.id:
                     if estudiante.documento == nuevo_documento:
-                        print(f"❌ Error: Ya existe otro estudiante con documento {nuevo_documento}")
+                        print(f"❌ Error")
                         return False
                     if estudiante.correo.lower() == nuevo_correo.lower():
-                        print(f"❌ Error: Ya existe otro estudiante con correo {nuevo_correo}")
+                        print(f"❌ Error")
                         return False
             
             # Actualizar estudiante

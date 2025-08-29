@@ -1,0 +1,5 @@
+1. Admite estudiantes que naciero este mismo año minimo que tenga plazo de 1 año para poder registralo
+
+2. El codigo del curso adminte asteristicos y otros simbolos no hablo de letras 
+
+3. El total de creditos que puede utilizar el estudiante sea 20

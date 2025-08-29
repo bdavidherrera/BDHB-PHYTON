@@ -1,2 +1,9 @@
 id,estudiante_id,curso_codigo,fecha_inscripcion
 ins001,est011,FIS101,2025-08-27
+ins002,est011,EST201,2025-08-27
+ins003,est002,MAT101,2025-08-27
+ins004,est003,MAT101,2025-08-27
+ins005,est011,FIS201,2025-08-29
+ins006,est011,MAT101,2025-08-29
+ins007,est011,ING101,2025-08-29
+ins008,est011,MAT201,2025-08-29
